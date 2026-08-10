@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="display-cutout" content="safe-area-inset">
+<link rel="manifest" href="manifest.json">
+<title>新闻速览</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  --bg:#fff;
+  --ink:#000;
+  --ink-2:#1a1a1a;
+  --gray:#333;
+  --gray-2:#555;
+  --line:#ccc;
+  --line-2:#999;
+}
+
+html{
+  font-size:24px;
+  -webkit-text-size-adjust:100%;
+  -webkit-tap-highlight-color:transparent;
+}
+
+body{
+  font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei","Heiti SC","Source Han Sans SC",sans-serif;
+  font-weight:400;
+  background:var(--bg);
+  color:var(--ink);
+  line-height:1.8;
+  max-width:720px;
+  margin:0 auto;
+  padding:0 20px;
+  padding-bottom:calc(100px + env(safe-area-inset-bottom));
+  letter-spacing:0;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+
+/* ===== Top Header (sticky, auto-hide on scroll) ===== */
+.top-header{
+  position:sticky;
+  top:0;
+  z-index:50;
+  background:var(--bg);
+  border-bottom:2px solid var(--ink);
+  margin:0 -20px 0;
+  padding:0 20px;
+}
+.top-header.hidden{transform:translateY(-100%)}
+.top-header.peek{transform:translateY(0)!important}
+
+/* ===== Toolbar ===== */
+.toolbar{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:5px 0;
+  flex-wrap:nowrap;
+  overflow:hidden;
+}
+.toolbar-title{
+  font-size:0.7083rem;
+  font-weight:800;
+  white-space:nowrap;
+  flex-shrink:0;
+}
+.toolbar-countdown{
+  font-size:0.5417rem;
+  color:var(--gray);
+  margin-left:auto;
+  margin-right:6px;
+  font-weight:700;
+  white-space:nowrap;
+}
+.toolbar-btns{display:flex;gap:6px;flex-shrink:0}
+.tbtn{
+  font-size:0.625rem;
+  font-weight:700;
+  padding:10px 14px;
+  min-height:48px;
+  min-width:48px;
+  border:2px solid var(--ink);
+  background:var(--bg);
+  color:var(--ink);
+  cursor:pointer;
+  border-radius:4px;
+  font-family:inherit;
+  -webkit-appearance:none;
+  appearance:none;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  touch-action:manipulation;
+  line-height:1;
+}
+.tbtn:active{background:var(--ink);color:var(--bg)}
+.tbtn.active{border-width:3px;background:var(--bg);color:var(--ink);font-weight:800}
+
+/* ===== Category Nav ===== */
+.cat-nav{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  padding:0 0 6px;
+  -webkit-overflow-scrolling:touch;
+}
+/* cat-nav: flex-wrap, no scrollbar needed */
+.cat-pill{
+  flex-shrink:0;
+  font-size:0.5833rem;
+  font-weight:700;
+  padding:8px 14px;
+  min-height:42px;
+  border:2px solid var(--line-2);
+  background:var(--bg);
+  color:var(--ink);
+  text-decoration:none;
+  border-radius:4px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  touch-action:manipulation;
+  white-space:nowrap;
+  cursor:pointer;
+}
+.cat-pill:active{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+/* ===== Update Status (merged into hero) ===== */
+#update-status{display:none}
+
+/* ===== Hero ===== */
+.hero{
+  margin-bottom:18px;
+  padding-bottom:14px;
+  border-bottom:2px solid var(--ink);
+  scroll-margin-top:140px;
+}
+.hero-date{font-size:0.625rem;color:var(--gray);font-weight:700;margin-bottom:4px}
+.hero-title{font-size:1.1667rem;font-weight:800;line-height:1.25;margin-bottom:4px}
+.hero-sub{font-size:0.5833rem;color:var(--gray);margin-bottom:10px;font-weight:600}
+.hero-summary{
+  border:2px solid var(--line-2);
+  border-radius:4px;
+  padding:12px 14px;
+  font-size:0.7083rem;
+  line-height:1.8;
+  color:var(--ink-2);
+  font-weight:400;
+}
+.hero-summary-label{
+  display:block;
+  font-size:0.5833rem;
+  font-weight:800;
+  margin-bottom:6px;
+  border-bottom:1px solid var(--line);
+  padding-bottom:4px;
+  color:var(--ink);
+}
+
+/* ===== Stats hidden ===== */
+.stats{display:none}
+
+/* ===== Section ===== */
+.section{margin-bottom:24px;scroll-margin-top:140px}
+.sec-head{
+  display:flex;
+  align-items:baseline;
+  gap:8px;
+  border-bottom:2px solid var(--ink);
+  padding-bottom:4px;
+  margin-bottom:8px;
+}
+.sec-title{font-size:0.9167rem;font-weight:800}
+.sec-count{font-size:0.625rem;color:var(--gray);font-weight:700}
+.sec-line{flex:1}
+
+/* ===== Deep Analysis ===== */
+.deep-section{margin-bottom:24px;scroll-margin-top:140px}
+.deep-head{border-bottom:3px double var(--ink);padding-bottom:4px;margin-bottom:10px}
+.deep-title{font-size:1rem;font-weight:800}
+.deep-sub{font-size:0.5833rem;color:var(--gray);font-weight:700;margin-top:2px}
+
+.deep-card{
+  border:2px solid var(--line-2);
+  border-radius:4px;
+  padding:14px 16px;
+  margin-bottom:10px;
+  text-decoration:none;
+  color:inherit;
+  display:block;
+  touch-action:manipulation;
+  cursor:pointer;
+}
+.deep-card:active{background:#f0f0f0}
+.deep-card-tag{
+  display:inline-block;
+  font-size:0.5417rem;
+  font-weight:800;
+  border:2px solid var(--ink);
+  padding:1px 8px;
+  border-radius:2px;
+  margin-bottom:6px;
+}
+.deep-card-title{font-size:0.8333rem;font-weight:800;line-height:1.3;margin-bottom:4px}
+.deep-card-src{font-size:0.5833rem;color:var(--gray);font-weight:700;margin-bottom:8px}
+.deep-row{display:flex;gap:8px;margin-bottom:6px;font-size:0.7083rem;line-height:1.75}
+.deep-row:last-of-type{margin-bottom:0}
+.deep-label{
+  font-weight:800;
+  flex-shrink:0;
+  min-width:40px;
+  border-right:2px solid var(--ink);
+  padding-right:8px;
+  color:var(--ink);
+}
+.deep-text{flex:1;color:var(--ink);font-weight:400}
+.deep-link{
+  display:inline-block;
+  margin-top:8px;
+  font-size:0.625rem;
+  font-weight:800;
+  color:var(--ink);
+  border-bottom:2px solid var(--ink);
+  padding-bottom:1px;
+}
+
+/* ===== News Item ===== */
+.news-item{
+  padding:10px 0;
+  border-bottom:1px solid var(--line);
+}
+.news-item:last-child{border-bottom:none}
+.news-link{
+  display:block;
+  text-decoration:none;
+  color:inherit;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+  cursor:pointer;
+}
+.news-link:active{background:#f5f5f5}
+.news-head{display:flex;align-items:baseline;gap:6px;margin-bottom:2px}
+.news-num{font-size:0.5833rem;font-weight:800;color:var(--gray-2);flex-shrink:0;min-width:30px}
+.news-title{font-size:0.7917rem;font-weight:700;line-height:1.35;color:var(--ink)}
+.news-desc{font-size:0.6667rem;color:var(--ink-2);line-height:1.6;padding-left:36px;font-weight:400}
+.news-bottom{display:flex;justify-content:space-between;align-items:center;padding-left:36px;margin-top:2px}
+.news-meta{font-size:0.5417rem;color:var(--gray-2);font-weight:600}
+.news-toggle{
+  display:inline-block;
+  font-size:0.5417rem;
+  font-weight:700;
+  color:var(--gray-2);
+  cursor:pointer;
+  touch-action:manipulation;
+  background:none;
+  border:none;
+  border-bottom:1px solid var(--gray-2);
+  padding:2px 4px;
+  font-family:inherit;
+  -webkit-appearance:none;
+  appearance:none;
+  line-height:1;
+}
+.news-toggle:active{color:var(--ink);border-bottom-color:var(--ink)}
+.news-detail{
+  display:none;
+  margin-top:8px;
+  padding-left:36px;
+  padding-right:4px;
+}
+.news-detail.show{display:block}
+.news-detail .deep-row{font-size:0.6667rem;line-height:1.7;margin-bottom:4px}
+.news-detail .deep-label{min-width:36px;font-size:0.5833rem;border-right:2px solid var(--ink);padding-right:6px}
+.news-detail .deep-text{font-size:0.6667rem;color:var(--ink)}
+.news-detail .deep-link{display:inline-block;margin-top:6px;font-size:0.5833rem;font-weight:800;color:var(--ink);border-bottom:2px solid var(--ink);padding-bottom:1px;text-decoration:none}
+
+/* ===== Footer ===== */
+.footer{
+  margin-top:24px;
+  padding-top:10px;
+  border-top:1px solid var(--line);
+  text-align:center;
+  font-size:0.5833rem;
+  color:var(--gray-2);
+  font-weight:600;
+}
+
+/* ===== Refresh Flash ===== */
+#flash{position:fixed;inset:0;z-index:9999;pointer-events:none;display:none}
+
+
+/* ===== Page Nav Buttons (up/down for e-ink, avoids scroll ghosting) ===== */
+.nav-btns{position:fixed;right:14px;top:62%;transform:translateY(-50%);z-index:99;display:flex;flex-direction:column;gap:8px}
+.nav-btn{
+  width:44px;height:44px;border-radius:22px;
+  border:2px solid var(--line-2);background:var(--bg);color:var(--ink);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;touch-action:manipulation;font-family:inherit;
+  -webkit-appearance:none;appearance:none;
+  font-size:0.7083rem;font-weight:800;line-height:1;padding:0;
+}
+.nav-btn:active{background:var(--ink);color:var(--bg)}
+body.dark .nav-btn{background:#000;color:#fff;border-color:#666}
+body.dark .nav-btn:active{background:#fff;color:#000}
+@media(max-width:640px){
+  .nav-btns{right:10px}
+  .nav-btn{width:40px;height:40px;border-radius:20px}
+}
+
+/* ===== Fullscreen FAB ===== */
+#fs-fab{
+  position:fixed;
+  right:14px;
+  bottom:calc(20px + env(safe-area-inset-bottom));
+  z-index:100;
+  min-width:56px;
+  min-height:56px;
+  padding:0 16px;
+  border-radius:28px;
+  background:var(--ink);
+  color:var(--bg);
+  border:2px solid var(--ink);
+  font-size:0.625rem;
+  font-weight:800;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  box-shadow:0 2px 6px rgba(0,0,0,.2);
+  -webkit-appearance:none;
+  appearance:none;
+  touch-action:manipulation;
+  line-height:1;
+  font-family:inherit;
+}
+#fs-fab:active{opacity:.8}
+
+/* ===== CSS Fullscreen Mode (fallback when Fullscreen API unavailable) ===== */
+body.is-fs .top-header{transform:translateY(-100%)}
+body.is-fs #update-status{display:none}
+body.is-fs .footer{display:none}
+body.is-fs .hero{margin-top:6px}
+body.is-fs{padding-top:6px}
+body.is-fs #fs-fab{
+  background:var(--bg);
+  color:var(--ink);
+  border-color:var(--ink);
+}
+
+/* ===== Dark Mode ===== */
+body.dark{
+  --bg:#000;
+  --ink:#fff;
+  --ink-2:#eee;
+  --gray:#aaa;
+  --gray-2:#777;
+  --line:#444;
+  --line-2:#666;
+}
+body.dark .tbtn{background:#000;color:#fff;border-color:#fff}
+body.dark .tbtn:active{background:#fff;color:#000}
+body.dark .tbtn.active{border-width:3px;background:#000;color:#fff;font-weight:800}
+body.dark .cat-pill{background:#000;color:#fff;border-color:#666}
+body.dark .cat-pill:active{background:#fff;color:#000;border-color:#fff}
+body.dark .news-link:active{background:#1a1a1a}
+body.dark .news-toggle{color:#888;border-bottom-color:#666}
+body.dark .news-toggle:active{color:#fff;border-bottom-color:#fff}
+body.dark .news-detail .deep-label{border-right-color:#fff}
+body.dark .deep-card:active{background:#1a1a1a}
+body.dark #fs-fab{background:#fff;color:#000;border-color:#fff}
+body.dark .hero-summary{border-color:#666}
+
+/* ===== Font Size ===== */
+
+/* ===== Mobile (6.13" e-ink: width ~624px in portrait) ===== */
+@media(max-width:640px){
+  body{padding:0 14px;padding-bottom:calc(90px + env(safe-area-inset-bottom))}
+  .top-header{margin:0 -14px 0;padding:0 14px}
+  #fs-fab{min-width:52px;min-height:52px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom))}
+}
+</style>
+</head>
+<body class="fs-l" data-date="2026-08-05" data-updated="2026-08-05T09:10">
+
+<!-- ===== Top Header ===== -->
+<div class="top-header" id="top-header">
+  <div class="toolbar">
+    <span class="toolbar-title">今日速览</span>
+    <span class="toolbar-countdown" id="countdown">02:00:00</span>
+    <div class="toolbar-btns">
+      <button class="tbtn" id="btn-refresh">刷新</button>
+      <button class="tbtn" id="btn-dark">夜间</button>
+      <button class="tbtn" id="btn-font">字号</button>
+    </div>
+  </div>
+  <div class="cat-nav" id="cat-nav">
+    <a class="cat-pill" data-target="hero">顶部</a>
+    <a class="cat-pill" data-target="deep">深度</a>
+    <a class="cat-pill" data-target="sec-国际政治">国际</a>
+    <a class="cat-pill" data-target="sec-军事国防">军事</a>
+    <a class="cat-pill" data-target="sec-科技前沿">科技</a>
+    <a class="cat-pill" data-target="sec-数码产品">数码</a>
+    <a class="cat-pill" data-target="sec-经济金融">经济</a>
+    <a class="cat-pill" data-target="sec-国内经济">国内</a>
+    <a class="cat-pill" data-target="sec-社会民生">社会</a>
+    <a class="cat-pill" data-target="sec-文化">文化</a>
+  </div>
+</div>
+
+
+
+<!-- ===== Hero ===== -->
+<section class="hero" id="hero">
+  <div class="hero-date">2026年8月4日 · 周二</div>
+  <h1 class="hero-title">今日新闻速览</h1>
+  <p class="hero-sub">共 80 条 + 12 篇深度解读（不重复）· 点击标题跳转原文</p>
+  <div class="hero-summary">
+    <span class="hero-summary-label">今日一句话总结</span>
+    美伊冲突从剑拔弩张转向谈判博弈，油价暴跌、美股创新高；国内核电超1700亿加码、"十五五"电网规划落地，A股首日缩量调整等待方向选择；科技端阿里发布万亿参数大模型、国产AI调用量持续领跑全球。
+  </div>
+</section>
+
+<!-- ===== Deep Analysis ===== -->
+<section class="deep-section" id="deep">
+  <div class="deep-head">
+    <div class="deep-title">深度解读</div>
+    <div class="deep-sub">12 篇重磅分析 · 点击阅读原文</div>
+  </div>
+
+  <a class="deep-card" href="https://www.163.com/dy/article/L3FF1LLB0514R9OJ.html" target="_blank" rel="noopener">
+      <span class="deep-card-tag">国际</span>
+      <div class="deep-card-title">特朗普称美伊正在对话：从海上封锁到谈判博弈的转折</div>
+      <div class="deep-card-src">来源：环球网 / 新华社 · 8月4日</div>
+      <div class="deep-row"><span class="deep-label">背景</span><span class="deep-text">美军对伊朗实施海上封锁已持续多日，改变了44艘商船航线，霍尔木兹海峡附近油轮发生爆炸。8月1日特朗普取消原定大规模空袭，沙特、阿联酋、卡塔尔斡旋下局势出现缓和窗口。</span></div>
+      <div class="deep-row"><span class="deep-label">影响</span><span class="deep-text">谈判消息直接触发国际油价暴跌5%以上，WTI跌破81美元。同时美股三大指数全线上涨，道指创历史新高。地缘风险溢价正在被市场快速重新定价。</span></div>
+      <div class="deep-row"><span class="deep-label">走向</span><span class="deep-text">特朗普称分两阶段推进：先开放海峡通航，后讨论无核化。但伊朗外交部明确否认正在谈判，仅承认与阿曼就海峡管控磋商。双方表态分歧明显，局势仍有反复可能。</span></div>
+      <span class="deep-link">阅读原文 →</span>
+    </a>
+<a class="deep-card" href="https://www.toutiao.com/article/7668860259569631795/" target="_blank" rel="noopener">
+      <span class="deep-card-tag">国内</span>
+      <div class="deep-card-title">国常会核准四核电项目：1700亿投资背后的能源战略</div>
+      <div class="deep-card-src">来源：澎湃新闻 · 8月4日</div>
+      <div class="deep-row"><span class="deep-label">背景</span><span class="deep-text">此次获批四项目（辽宁庄河、山东莱阳、浙江金七门二期、广东太平岭三期）共8台新机组，总投资超1700亿元。这是2022年以来连续第四年每年核准10台左右机组，核电审批已进入常态化节奏。</span></div>
+      <div class="deep-row"><span class="deep-label">影响</span><span class="deep-text">核电是扩大有效投资的重要拉动力。华龙一号2.0版正式落地，民营资本参股金七门项目（雅戈尔、阿里系等），标志着核电投资主体多元化。对广东、山东等沿海用电大省能源保供意义重大。</span></div>
+      <div class="deep-row"><span class="deep-label">走向</span><span class="deep-text">广发证券预计&#x27;十五五&#x27;期间将迎来核电投产高峰，2026-2030年每年投产5-8台机组。配合&#x27;十五五&#x27;电网特高压在建规模翻倍，核电+电网双重加码支撑清洁能源转型。</span></div>
+      <span class="deep-link">阅读原文 →</span>
+    </a>
+<a class="deep-card" href="https://www.toutiao.com/article/7669978885034983974" target="_blank" rel="noopener">
+      <span class="deep-card-tag">科技</span>
+      <div class="deep-card-title">阿里Qwen3.8发布：2.4万亿参数跻身全球第一梯队</div>
+      <div class="deep-card-src">来源：贝果财经 / 中国经营报 · 8月4日</div>
+      <div class="deep-row"><span class="deep-label">背景</span><span class="deep-text">8月3日阿里发布千问系列旗舰Qwen3.8-Max，总参数2.4万亿，采用稀疏MoE架构+混合注意力，激活95B。支持视觉理解、1M上下文。同步推出Agent产品&#x27;千问办公&#x27;并接入该模型。</span></div>
+      <div class="deep-row"><span class="deep-label">影响</span><span class="deep-text">Arena榜单中仅次于Anthropic Claude系列，稳居全球第一梯队。编程能力实现自主项目交付突破，可从空文件夹自主完成十数天项目。API定价仅为Opus5的24%-40%，性价比极高。</span></div>
+      <div class="deep-row"><span class="deep-label">走向</span><span class="deep-text">Qwen3.8-Max及27B版本下周开源。阿里真武M890超节点已适配，推理效率最多提升1.5倍。国产大模型周调用量已连续14周超美国，全球前五均为中国模型。</span></div>
+      <span class="deep-link">阅读原文 →</span>
+    </a>
+<a class="deep-card" href="https://new.qq.com/rain/a/20260804A03ZVD00" target="_blank" rel="noopener">
+      <span class="deep-card-tag">财经</span>
+      <div class="deep-card-title">亚马逊市值首破3万亿美元：AI算力需求催生新巨头</div>
+      <div class="deep-card-src">来源：每日经济新闻 · 8月4日</div>
+      <div class="deep-row"><span class="deep-label">背景</span><span class="deep-text">8月3日亚马逊股价收涨4.6%，市值首破3万亿美元，成史上第五家（继英伟达、微软、苹果、Alphabet之后）。从2万亿到3万亿仅用时两年多，扩张速度显著加快。核心驱动力是AWS云业务。</span></div>
+      <div class="deep-row"><span class="deep-label">影响</span><span class="deep-text">二季度AWS营收同比增长37%，创2021年以来最快增速。财报打消了市场对AI资本开支回报的疑虑，上周五单日涨超15%创14年最大涨幅。同日Meta涨6%、微软涨5%、甲骨文涨9.2%，云赛道全线走强。</span></div>
+      <div class="deep-row"><span class="deep-label">走向</span><span class="deep-text">AWS负责人披露正与客户签五年期长期合同锁定AI算力，&#x27;需求远超供给&#x27;。亚马逊上调全年资本开支指引，认为AI算力缺口或持续至2028年。算力军备竞赛仍在加速。</span></div>
+      <span class="deep-link">阅读原文 →</span>
+    </a>
+<a class="deep-card" href="https://www.baidu.com/s?wd=MiniMax H3 开源 2026年8月" target="_blank" rel="noopener">
+      <span class="deep-card-tag">科技</span>
+      <div class="deep-card-title">MiniMax开源H3：视频模型迎来&#x27;DeepSeek时刻&#x27;？</div>
+      <div class="deep-card-src">来源：中国新闻周刊 · 8月4日</div>
+      <div class="deep-row"><span class="deep-label">背景</span><span class="deep-text">MiniMax开源新一代通用视频模型H3，可生成2K分辨率、最长15秒带原生立体声音频的视频。模型在物理一致性、镜头运动和人物表情等方面表现突出。</span></div>
+      <div class="deep-row"><span class="deep-label">影响</span><span class="deep-text">开源生态加速视频生成能力民主化。相比Runway、Pika等闭源产品，H3在中文场景和硬件适配上更具优势，可能大幅降低短视频、广告、影视预演的内容生产成本。</span></div>
+      <div class="deep-row"><span class="deep-label">走向</span><span class="deep-text">视频大模型竞争正从&#x27;能生成&#x27;走向&#x27;可商用&#x27;。随着阿里、字节、MiniMax等中国企业相继开源或降价，全球视频生成市场格局有望在一年内重塑。</span></div>
+      <span class="deep-link">阅读原文 →</span>
+    </a>
+<a class="deep-card" href="https://www.baidu.com/s?wd=韩国综指暴跌 2026年8月4日" target="_blank" rel="noopener">
+      <span class="deep-card-tag">财经</span>
+      <div class="deep-card-title">韩国综指暴跌5.13%：杠杆ETF放大半导体股波动</div>
+      <div class="deep-card-src">来源：中国经营报 · 8月4日</div>
+      <div class="deep-row"><span class="deep-label">背景</span><span class="deep-text">8月4日韩国综合股价指数暴跌5.13%，创2020年3月以来最大单日跌幅。三星电子、SK海力士等半导体巨头跌超8%，触发&#x27;边车机制&#x27;暂停程序化交易。</span></div>
+      <div class="deep-row"><span class="deep-label">影响</span><span class="deep-text">韩国股市杠杆ETF规模近年快速扩张，半导体板块集中度极高，一旦外部冲击引发抛售，杠杆资金会放大波动。此次暴跌反映市场对AI芯片需求周期和美国出口管制政策的双重担忧。</span></div>
+      <div class="deep-row"><span class="deep-label">走向</span><span class="deep-text">韩国交易所已启动市场稳定措施。中长期看，韩国半导体产业仍受益于HBM等高附加值产品需求，但短期波动或将持续，需关注美联储政策和美股科技股走势。</span></div>
+      <span class="deep-link">阅读原文 →</span>
+    </a>
+<a class="deep-card" href="https://www.baidu.com/s?wd=SK海力士 HBF标准 2026年8月" target="_blank" rel="noopener">
+      <span class="deep-card-tag">科技</span>
+      <div class="deep-card-title">SK海力士HBF标准首发：破解AI时代&#x27;内存墙&#x27;</div>
+      <div class="deep-card-src">来源：SK海力士 / 腾讯新闻 · 8月4日</div>
+      <div class="deep-row"><span class="deep-label">背景</span><span class="deep-text">SK海力士与闪迪联合发布全球首个HBF（High Bandwidth Flash）标准，最高带宽3.0TB/s，定位介于HBM与SSD之间的全新存储层级，面向AI训练和推理的海量数据调度需求。</span></div>
+      <div class="deep-row"><span class="deep-label">影响</span><span class="deep-text">当前AI算力瓶颈已从芯片算力转向&#x27;内存墙&#x27;——数据在GPU、DRAM、SSD之间搬运效率低下。HBF试图用新型存储架构减少数据搬运，提升推理效率和性价比。</span></div>
+      <div class="deep-row"><span class="deep-label">走向</span><span class="deep-text">HBF有望成为下一代AI服务器标配。若该标准获得英伟达、AMD等生态支持，将重塑AI存储市场格局，SK海力士和闪迪将占据先发优势。</span></div>
+      <span class="deep-link">阅读原文 →</span>
+    </a>
+<a class="deep-card" href="https://www.baidu.com/s?wd=波音737 Max 7 FAA认证 2026年8月" target="_blank" rel="noopener">
+      <span class="deep-card-tag">科技</span>
+      <div class="deep-card-title">波音737 MAX-7终获认证：十年监管危机迎来转机</div>
+      <div class="deep-card-src">来源：波音 / FAA · 8月4日</div>
+      <div class="deep-row"><span class="deep-label">背景</span><span class="deep-text">波音737 MAX-7历经近十年延期后终获FAA适航认证。该机型是737 MAX家族中最小成员，可搭载138-172名乘客，主要面向中短程航线市场。</span></div>
+      <div class="deep-row"><span class="deep-label">影响</span><span class="deep-text">认证意味着波音可以开始交付MAX-7，缓解现金流压力。此前两起空难导致MAX全球停飞，波音声誉和财务遭受重创，MAX-7认证被视为监管关系修复的重要信号。</span></div>
+      <div class="deep-row"><span class="deep-label">走向</span><span class="deep-text">波音仍需面对MAX-10等更大机型的认证挑战，以及中国等主要市场复飞进度。产能恢复和品控重建是未来两年的核心任务。</span></div>
+      <span class="deep-link">阅读原文 →</span>
+    </a>
+<a class="deep-card" href="https://www.163.com/dy/article/L3G23TMB05129O9M.html" target="_blank" rel="noopener">
+      <span class="deep-card-tag">军事</span>
+      <div class="deep-card-title">南海五日军事训练：海空一体捍卫主权释放哪些信号</div>
+      <div class="deep-card-src">来源：大公报 / 封面新闻 · 8月4日</div>
+      <div class="deep-row"><span class="deep-label">背景</span><span class="deep-text">三亚海事局发布航行警告，8月3日至8月7日南海部分海域进行军事训练，禁止驶入。此前解放军已在黄岩岛领海、领空和周边海空域组织海空联合演训。</span></div>
+      <div class="deep-row"><span class="deep-label">影响</span><span class="deep-text">演训常态化、日常化释放明确信号：中方维护南海主权意志坚定，军种协同能力持续提升。舰机随遇入网、战训耦合，意味着海军与空军在南海一线的联合处置能力已显著增强。</span></div>
+      <div class="deep-row"><span class="deep-label">走向</span><span class="deep-text">若菲律宾持续挑衅，中方可能进一步增加演训频次和规模。海空一体联合作战体系将成为维护南海稳定的重要支撑。</span></div>
+      <span class="deep-link">阅读原文 →</span>
+    </a>
+<a class="deep-card" href="https://www.163.com/dy/article/L3FRARQ805568W0A.html" target="_blank" rel="noopener">
+      <span class="deep-card-tag">汽车</span>
+      <div class="deep-card-title">腾势Z9S预售31.98万起：比亚迪高端化的又一次冲锋</div>
+      <div class="deep-card-src">来源：IT之家 / 苑叔聊车 · 8月4日</div>
+      <div class="deep-row"><span class="deep-label">背景</span><span class="deep-text">8月3日比亚迪腾势Z9S开启预售，三款车型预售价31.98万-38.98万元。新车定位C级纯电轿车，全系标配天神之眼5.0、第二代刀片电池及易三方技术平台。</span></div>
+      <div class="deep-row"><span class="deep-label">影响</span><span class="deep-text">CLTC纯电续航1100km刷新量产纯电轿车全球纪录，5分钟闪充技术进一步缓解里程焦虑。这补强了比亚迪在30-40万元高端纯电轿车市场的布局，与蔚来ET5、极氪001等直接竞争。</span></div>
+      <div class="deep-row"><span class="deep-label">走向</span><span class="deep-text">比亚迪正通过腾势、方程豹、仰望三线进攻高端市场。Z9S能否成功，取决于交付节奏、智驾体验和品牌溢价能力。</span></div>
+      <span class="deep-link">阅读原文 →</span>
+    </a>
+<a class="deep-card" href="https://www.xuhui.gov.cn/xwzx_zwxx/20260804/575635.html" target="_blank" rel="noopener">
+      <span class="deep-card-tag">健康</span>
+      <div class="deep-card-title">中山医院拍下肝癌转移全过程：癌症防治进入&#x27;时空图谱&#x27;时代</div>
+      <div class="deep-card-src">来源：复旦大学附属中山医院 · 8月4日</div>
+      <div class="deep-row"><span class="deep-label">背景</span><span class="deep-text">复旦大学附属中山医院樊嘉院士、周俭院士团队在国际顶级期刊《Science》发表研究，首次完整还原肿瘤细胞从播散、休眠、复苏增殖到宏转移的全过程。</span></div>
+      <div class="deep-row"><span class="deep-label">影响</span><span class="deep-text">研究将临床治疗策略从&#x27;寻找靶点&#x27;升级为&#x27;靶点+时机&#x27;双维决策，为建立分阶段抗转移治疗提供新策略。结论对肝癌、结直肠癌、黑色素瘤等多种实体肿瘤均具参考价值。</span></div>
+      <div class="deep-row"><span class="deep-label">走向</span><span class="deep-text">未来有望开发出针对转移&#x27;适应性窗口期&#x27;的干预手段，把癌症转移扼杀在摇篮里。这在全球肿瘤学领域具备开创性意义。</span></div>
+      <span class="deep-link">阅读原文 →</span>
+    </a>
+<a class="deep-card" href="https://www.163.com/dy/article/L3FFND78053469RG.html" target="_blank" rel="noopener">
+      <span class="deep-card-tag">房产</span>
+      <div class="deep-card-title">一线城市二手房显韧性：楼市进入结构性修复阶段</div>
+      <div class="deep-card-src">来源：证券时报 / 中指研究院 · 8月4日</div>
+      <div class="deep-row"><span class="deep-label">背景</span><span class="deep-text">今年上半年全国楼市政策持续优化，北上广深等一线城市率先释放企稳信号。7月北京二手住宅网签1.4万套同比增长9.8%，上海、深圳核心城市同比亦增长。</span></div>
+      <div class="deep-row"><span class="deep-label">影响</span><span class="deep-text">市场呈现明显K型分化：核心城市优质资产率先企稳，三四线城市仍在磨底。政策重心已从短期刺激转向城市更新、&#x27;好房子&#x27;体系构建和住房消费全链条支持。</span></div>
+      <div class="deep-row"><span class="deep-label">走向</span><span class="deep-text">&#x27;金九银十&#x27;和政策落地效果是关键变量。普涨时代已结束，楼市进入&#x27;选对资产才有机会&#x27;的存量竞争阶段，地段、配套、品质、流通性将拉开差距。</span></div>
+      <span class="deep-link">阅读原文 →</span>
+    </a>
+</section>
+
+<section class="section" id="sec-国际政治">
+    <div class="sec-head">
+      <span class="sec-title">国际政治</span>
+      <span class="sec-count">10 条</span>
+      <span class="sec-line"></span>
+    </div>
+  </section>
+<section class="section" id="sec-军事国防">
+    <div class="sec-head">
+      <span class="sec-title">军事国防</span>
+      <span class="sec-count">10 条</span>
+      <span class="sec-line"></span>
+    </div>
+  </section>
+<section class="section" id="sec-科技前沿">
+    <div class="sec-head">
+      <span class="sec-title">科技前沿</span>
+      <span class="sec-count">10 条</span>
+      <span class="sec-line"></span>
+    </div>
+  </section>
+<section class="section" id="sec-数码产品">
+    <div class="sec-head">
+      <span class="sec-title">数码产品</span>
+      <span class="sec-count">10 条</span>
+      <span class="sec-line"></span>
+    </div>
+  </section>
+<section class="section" id="sec-经济金融">
+    <div class="sec-head">
+      <span class="sec-title">经济金融</span>
+      <span class="sec-count">10 条</span>
+      <span class="sec-line"></span>
+    </div>
+  </section>
+<section class="section" id="sec-国内经济">
+    <div class="sec-head">
+      <span class="sec-title">国内经济</span>
+      <span class="sec-count">10 条</span>
+      <span class="sec-line"></span>
+    </div>
+  </section>
+<section class="section" id="sec-社会民生">
+    <div class="sec-head">
+      <span class="sec-title">社会民生</span>
+      <span class="sec-count">10 条</span>
+      <span class="sec-line"></span>
+    </div>
+  </section>
+<section class="section" id="sec-文化">
+    <div class="sec-head">
+      <span class="sec-title">文化</span>
+      <span class="sec-count">10 条</span>
+      <span class="sec-line"></span>
+    </div>
+  </section>
+
+
+<div class="footer">今日新闻速览 · 墨水屏优化版 · 2026.08.04</div>
+
+
+<div class="nav-btns"><button class="nav-btn" id="nav-up">↑</button><button class="nav-btn" id="nav-down">↓</button></div>
+<div id="flash"></div>
+
+<button id="fs-fab">全屏</button>
+
+<script>
+// ===== E-ink refresh (flash to clear ghosting) =====
+function einkRefresh(){
+  var f=document.getElementById('flash');
+  if(!f)return;
+  f.style.display='block';
+  f.style.background='#000';
+  setTimeout(function(){f.style.background='#fff';},150);
+  setTimeout(function(){f.style.display='none';},300);
+}
+
+// ===== Dark mode =====
+function toggleDark(){
+  document.body.classList.toggle('dark');
+  var isDark=document.body.classList.contains('dark');
+  var b=document.getElementById('btn-dark');
+  if(b){b.textContent=isDark?'日间':'夜间';b.classList.toggle('active',isDark);}
+  try{localStorage.setItem('eink-dark',isDark?'1':'0')}catch(e){}
+}
+
+// ===== Font size cycle (controls html root font-size, all text uses rem) =====
+var rootSizes=[18,21,24,27,30]; // s,m,l,xl,xxl in px
+var labels=['小','中','大','特大','巨'];
+var idx=2; // default: l (24px)
+function applyFontSize(){
+  document.documentElement.style.fontSize=rootSizes[idx]+'px';
+  var b=document.getElementById('btn-font');
+  if(b){b.textContent=labels[idx];b.classList.toggle('active',idx!==2);}
+}
+function cycleFontSize(){
+  idx=(idx+1)%rootSizes.length;
+  applyFontSize();
+  try{localStorage.setItem('eink-fontsize',idx.toString())}catch(e){}
+}
+
+// ===== Fullscreen =====
+// Uses Fullscreen API if available + CSS fallback that always works
+function toggleFullscreen(){
+  var doc=document;
+  var el=doc.documentElement;
+  var apiFs=doc.fullscreenElement||doc.webkitFullscreenElement||doc.mozFullScreenElement||doc.msFullscreenElement;
+  var cssFs=document.body.classList.contains('is-fs');
+
+  if(!apiFs && !cssFs){
+    // === Enter fullscreen ===
+    // Try Fullscreen API (hides Android system bars)
+    var req=el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen||el.msRequestFullscreen;
+    if(req){
+      try{
+        var p=req.call(el);
+        if(p&&p.catch){p.catch(function(){});}
+      }catch(e){}
+    }
+    // CSS fallback: hide all UI elements (works even if API fails)
+    document.body.classList.add('is-fs');
+    var fab=document.getElementById('fs-fab');
+    if(fab)fab.textContent='退出';
+    try{localStorage.setItem('eink-fs','1')}catch(e){}
+  }else{
+    // === Exit fullscreen ===
+    if(apiFs){
+      var ex=doc.exitFullscreen||doc.webkitExitFullscreen||doc.mozCancelFullScreen||doc.msExitFullscreen;
+      if(ex){try{ex.call(doc);}catch(e){}}
+    }
+    document.body.classList.remove('is-fs');
+    var fab2=document.getElementById('fs-fab');
+    if(fab2)fab2.textContent='全屏';
+    try{localStorage.setItem('eink-fs','0')}catch(e){}
+  }
+}
+
+// Sync when system exits fullscreen (e.g. back button)
+function onFsChange(){
+  var apiFs=document.fullscreenElement||document.webkitFullscreenElement||document.mozFullScreenElement||document.msFullscreenElement;
+  if(!apiFs){
+    document.body.classList.remove('is-fs');
+    var fab=document.getElementById('fs-fab');
+    if(fab)fab.textContent='全屏';
+  }
+}
+document.addEventListener('fullscreenchange',onFsChange);
+document.addEventListener('webkitfullscreenchange',onFsChange);
+
+// ===== Restore settings =====
+try{
+  if(localStorage.getItem('eink-dark')==='1'){toggleDark();}
+  var si=parseInt(localStorage.getItem('eink-fontsize'));
+  if(!isNaN(si)&&si>=0&&si<rootSizes.length){
+    idx=si;
+  }
+  applyFontSize();
+}catch(e){}
+
+// ===== Button binding (click ONLY - no touchend) =====
+// touchend + preventDefault was breaking Fullscreen API (not a valid user gesture)
+function bindBtn(id,fn){
+  var el=document.getElementById(id);
+  if(!el)return;
+  el.addEventListener('click',function(e){
+    e.preventDefault();
+    fn();
+  });
+}
+bindBtn('btn-refresh',einkRefresh);
+bindBtn('btn-dark',toggleDark);
+bindBtn('btn-font',cycleFontSize);
+bindBtn('fs-fab',toggleFullscreen);
+
+
+// ===== Page navigation (up/down by viewport height + e-ink refresh to clear ghosting) =====
+function scrollPage(dir){
+  var h=window.innerHeight||document.documentElement.clientHeight;
+  window.scrollBy(0,Math.round(dir*h*0.85));
+}
+bindBtn('nav-up',function(){scrollPage(-1);});
+bindBtn('nav-down',function(){scrollPage(1);});
+
+// ===== Category nav: click to scroll =====
+function jumpTo(targetId){
+  var el=document.getElementById(targetId);
+  if(!el)return;
+  try{
+    el.scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(e){
+    el.scrollIntoView();
+  }
+}
+var pills=document.querySelectorAll('.cat-pill');
+for(var pi=0;pi<pills.length;pi++){
+  (function(pill){
+    pill.addEventListener('click',function(e){
+      e.preventDefault();
+      var target=pill.getAttribute('data-target');
+      if(target)jumpTo(target);
+    });
+  })(pills[pi]);
+}
+
+// ===== 2-hour auto refresh =====
+var remain=7200;
+function fmt(t){
+  var h=Math.floor(t/3600),m=Math.floor((t%3600)/60),s=t%60;
+  return (h<10?'0':'')+h+':'+(m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+}
+function tick(){
+  remain--;
+  if(remain<=0){
+    einkRefresh();
+    setTimeout(function(){location.reload();},350);
+    remain=7200;
+  }
+  var el=document.getElementById('countdown');
+  if(el)el.textContent=fmt(remain);
+}
+setInterval(tick,1000);
+
+// ===== Service Worker =====
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(function(err){});
+}
+
+// ===== Scroll: auto-hide header (with threshold to prevent flicker) =====
+var lastY=0;
+var headerHidden=false;
+window.addEventListener('scroll',function(){
+  var y=window.pageYOffset||document.documentElement.scrollTop;
+  var header=document.getElementById('top-header');
+  if(!header)return;
+  if(document.body.classList.contains('is-fs')){
+    if(!headerHidden){header.classList.add('hidden');headerHidden=true;}
+    header.classList.remove('peek');
+    try{clearTimeout(window.peekTimer);}catch(e){}
+    return;
+  }
+  // Only toggle if scroll delta > 15px (prevents micro-scroll flicker)
+  var delta=Math.abs(y-lastY);
+  if(delta<15 && y>80) return;
+  if(y>lastY && y>80){
+    if(!headerHidden){header.classList.add('hidden');headerHidden=true;}
+  }else{
+    if(headerHidden){header.classList.remove('hidden');headerHidden=false;}
+  }
+  lastY=y;
+},{passive:true});
+
+// ===== Dynamic update: fetch news-data.json =====
+function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function tryUpdateNews(){
+  try{
+    fetch('news-data.json',{cache:'no-cache'})
+      .then(function(r){return r.json();})
+      .then(function(d){
+        try{
+          var pageUpdated=document.body.getAttribute('data-updated')||'';
+          var jsonUpdated=d.updatedAt||d.date||'';
+          var jsonDate=d.date||'';
+          if(jsonUpdated && jsonUpdated>pageUpdated){
+            applyNewsData(d);
+            document.body.setAttribute('data-updated',jsonUpdated);
+            if(jsonDate)document.body.setAttribute('data-date',jsonDate);
+          }
+        }catch(e){}
+      })
+      .catch(function(e){});
+  }catch(e){}
+}
+function applyNewsData(d){
+  var hero=document.querySelector('.hero');
+  if(hero&&d.summary){
+    var dateEl=hero.querySelector('.hero-date');
+    if(dateEl&&d.date){
+      var parts=d.date.split('-');
+      dateEl.textContent=parts[0]+'\u5e74'+parseInt(parts[1])+'\u6708'+parseInt(parts[2])+'\u65e5 \u00b7 '+(d.weekday||'');
+    }
+    var subEl=hero.querySelector('.hero-sub');
+    if(subEl&&d.subtitle)subEl.textContent=d.subtitle;
+    var sumEl=hero.querySelector('.hero-summary');
+    if(sumEl){
+      var label=sumEl.querySelector('.hero-summary-label');
+      sumEl.innerHTML='';
+      if(label)sumEl.appendChild(label);
+      sumEl.appendChild(document.createTextNode(d.summary));
+    }
+  }
+  var deepSec=document.querySelector('.deep-section');
+  if(deepSec&&d.deepAnalysis){
+    var head=deepSec.querySelector('.deep-head');
+    if(head){
+      head.innerHTML='<div class="deep-title">\u6df1\u5ea6\u89e3\u8bfb</div>'+
+        '<div class="deep-sub">'+d.deepAnalysis.length+' \u7bc7\u91cd\u78c5\u5206\u6790 \u00b7 \u70b9\u51fb\u9605\u8bfb\u539f\u6587</div>';
+    }
+    var oldCards=deepSec.querySelectorAll('.deep-card');
+    for(var oi=0;oi<oldCards.length;oi++){oldCards[oi].remove();}
+    var html='';
+    for(var i=0;i<d.deepAnalysis.length;i++){
+      var a=d.deepAnalysis[i];
+      html+='<a class="deep-card" href="'+escHtml(a.link)+'" target="_blank" rel="noopener">';
+      html+='<span class="deep-card-tag">'+escHtml(a.category)+'</span>';
+      html+='<div class="deep-card-title">'+escHtml(a.title)+'</div>';
+      html+='<div class="deep-card-src">\u6765\u6e90\uff1a'+escHtml(a.source)+(a.time?' · '+escHtml(a.time):'')+'</div>';
+      html+='<div class="deep-row"><span class="deep-label">\u80cc\u666f</span><span class="deep-text">'+escHtml(a.background)+'</span></div>';
+      html+='<div class="deep-row"><span class="deep-label">\u5f71\u54cd</span><span class="deep-text">'+escHtml(a.impact)+'</span></div>';
+      html+='<div class="deep-row"><span class="deep-label">\u8d70\u5411</span><span class="deep-text">'+escHtml(a.outlook)+'</span></div>';
+      html+='<span class="deep-link">\u9605\u8bfb\u539f\u6587 \u2192</span></a>';
+    }
+    deepSec.insertAdjacentHTML('beforeend',html);
+  }
+  var fallbackMap={
+    '国际政治':{'impact':'此事可能影响国际关系格局和相关国家外交政策走向。','outlook':'后续走向取决于各方外交博弈和利益平衡，需关注相关国家后续表态。'},
+    '军事国防':{'impact':'此事可能影响地区安全局势和军事力量对比。','outlook':'后续走向取决于地区局势演变和各方军事部署调整，需持续关注。'},
+    '科技前沿':{'impact':'此事可能推动相关技术路线发展和产业应用落地。','outlook':'后续发展取决于技术成熟度和商业化进度，需关注行业头部企业动向。'},
+    '数码产品':{'impact':'此事可能影响消费电子市场格局和用户购买决策。','outlook':'后续走向取决于产品定价和市场竞争，需关注销量数据和用户口碑。'},
+    '经济金融':{'impact':'此事可能对相关行业板块和资本市场情绪产生影响。','outlook':'后续走势取决于市场资金面和政策预期变化，建议关注相关数据发布。'},
+    '国内经济':{'impact':'此事可能影响国内相关产业发展和企业经营环境。','outlook':'后续走向取决于政策落实和市场反应，需关注官方后续动态。'},
+    '社会民生':{'impact':'此事可能影响相关群体的切身利益和社会公共管理。','outlook':'后续进展取决于相关措施落实和社会反馈，需关注民生政策调整。'},
+    '文化':{'impact':'此事可能影响文化产业走向和公众文化消费。','outlook':'后续发展取决于市场反响和行业生态变化，需关注相关方后续动作。'}
+  };
+  if(d.sections){
+    for(var si2=0;si2<d.sections.length;si2++){
+      var sec=d.sections[si2];
+      var secEl=document.getElementById('sec-'+sec.name);
+      if(!secEl)continue;
+      var secHead=secEl.querySelector('.sec-head');
+      if(secHead)secHead.innerHTML='<span class="sec-title">'+escHtml(sec.name)+'</span><span class="sec-count">'+escHtml(sec.count)+' \u6761</span><span class="sec-line"></span>';
+      var oldItems=secEl.querySelectorAll('.news-item');
+      for(var oi2=0;oi2<oldItems.length;oi2++){oldItems[oi2].remove();}
+      var itemsHtml='';
+      for(var ii=0;ii<sec.items.length;ii++){
+        var it=sec.items[ii];
+        itemsHtml+='<div class="news-item">';
+        itemsHtml+='<a class="news-link" href="'+escHtml(it.link)+'" target="_blank" rel="noopener">';
+        itemsHtml+='<div class="news-head"><span class="news-num">'+(ii+1)+'</span><span class="news-title">'+escHtml(it.title)+'</span></div>';
+        itemsHtml+='<div class="news-desc">'+escHtml(it.desc)+'</div>';
+        itemsHtml+='</a><div class="news-bottom"><div class="news-meta">'+escHtml(it.meta)+(it.time?' \u00b7 '+escHtml(it.time):'')+'</div>';
+        itemsHtml+='<div class="news-toggle" data-expanded="0">\u5c55\u5f00\u5206\u6790</div></div>';
+        itemsHtml+='<div class="news-detail">';
+        var fb=fallbackMap[sec.name]||{'impact':'此事可能对相关领域产生影响。','outlook':'后续发展需持续关注。'};
+        if(it.background){
+          itemsHtml+='<div class="deep-row"><span class="deep-label">\u80cc\u666f</span><span class="deep-text">'+escHtml(it.background)+'</span></div>';
+        }else{
+          itemsHtml+='<div class="deep-row"><span class="deep-label">\u80cc\u666f</span><span class="deep-text">'+escHtml(it.desc)+'</span></div>';
+        }
+        if(it.impact){
+          itemsHtml+='<div class="deep-row"><span class="deep-label">\u5f71\u54cd</span><span class="deep-text">'+escHtml(it.impact)+'</span></div>';
+        }else{
+          itemsHtml+='<div class="deep-row"><span class="deep-label">\u5f71\u54cd</span><span class="deep-text">'+escHtml(fb.impact)+'</span></div>';
+        }
+        if(it.outlook){
+          itemsHtml+='<div class="deep-row"><span class="deep-label">\u8d70\u5411</span><span class="deep-text">'+escHtml(it.outlook)+'</span></div>';
+        }else{
+          itemsHtml+='<div class="deep-row"><span class="deep-label">\u8d70\u5411</span><span class="deep-text">'+escHtml(fb.outlook)+'</span></div>';
+        }
+        itemsHtml+='<a class="deep-link" href="'+escHtml(it.link)+'" target="_blank" rel="noopener">\u9605\u8bfb\u539f\u6587 \u2192</a>';
+        itemsHtml+='</div>';
+        itemsHtml+='</div>';
+      }
+      secEl.insertAdjacentHTML('beforeend',itemsHtml);
+    }
+  }
+  var ft=document.querySelector('.footer');
+  if(ft&&d.date)ft.textContent='\u4eca\u65e5\u65b0\u95fb\u901f\u89c8 \u00b7 \u58a8\u6c34\u5c4f\u4f18\u5316\u7248 \u00b7 '+d.date.replace(/-/g,'.');
+}
+setTimeout(tryUpdateNews,1000);
+
+// ===== News item expand/collapse (event delegation) =====
+document.addEventListener('click',function(e){
+  var el=e.target;
+  if(!el||!el.className||typeof el.className!=='string')return;
+  if(el.className.indexOf('news-toggle')===-1)return;
+  e.preventDefault();
+  e.stopPropagation();
+  var item=el.closest?el.closest('.news-item'):el.parentElement.parentElement;
+  if(!item)return;
+  var detail=item.querySelector('.news-detail');
+  if(!detail)return;
+  if(detail.className.indexOf('show')!==-1){
+    detail.className=detail.className.replace(/\s*show/g,'');
+    el.textContent='展开分析';
+  }else{
+    detail.className+=' show';
+    el.textContent='收起分析';
+  }
+});
+
+// ===== Left-edge swipe: peek header in fullscreen =====
+var touchStartX=0,touchStartY=0,isEdgeSwipe=false;
+document.addEventListener('touchstart',function(e){
+  if(!e.touches||!e.touches[0])return;
+  var t=e.touches[0];
+  touchStartX=t.clientX;
+  touchStartY=t.clientY;
+  isEdgeSwipe=t.clientX<30;
+},{passive:true});
+document.addEventListener('touchend',function(e){
+  if(!isEdgeSwipe)return;
+  isEdgeSwipe=false;
+  if(!e.changedTouches||!e.changedTouches[0])return;
+  var t=e.changedTouches[0];
+  var dx=t.clientX-touchStartX;
+  var dy=Math.abs(t.clientY-touchStartY);
+  if(dx>40&&dx>dy*2){
+    var header=document.getElementById('top-header');
+    if(header&&document.body.classList.contains('is-fs')){
+      header.classList.remove('hidden');
+      header.classList.add('peek');
+      try{clearTimeout(window.peekTimer);}catch(e){}
+      window.peekTimer=setTimeout(function(){
+        header.classList.remove('peek');
+      },5000);
+    }
+  }
+},{passive:true});
+</script>
+</body>
+</html>
