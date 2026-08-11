@@ -1,7 +1,7 @@
 // Service Worker - 墨水屏新闻 PWA
 // 策略：network-first（在线时取最新，离线时用缓存）
 
-const CACHE_NAME = 'eink-news-v19';
+const CACHE_NAME = 'eink-news-v20';
 const CACHE_FILES = [
   './',
   './index.html',
