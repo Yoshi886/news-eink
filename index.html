@@ -144,15 +144,31 @@ body{
   scroll-margin-top:140px;
 }
 .hero-quote{
-  font-size:0.875rem;
-  color:var(--ink);
-  font-weight:700;
-  margin-bottom:14px;
-  padding:18px 16px;
-  border:2px solid var(--ink);
-  border-radius:4px;
-  line-height:1.8;
+  margin-bottom:18px;
+  padding:20px 24px 18px;
+  border:3px double var(--ink);
   text-align:center;
+  line-height:1.9;
+}
+.hero-quote-label{
+  display:block;
+  font-size:0.5833rem;
+  font-weight:800;
+  letter-spacing:6px;
+  padding-left:6px;
+  margin-bottom:8px;
+}
+.hero-quote-sep{
+  display:block;
+  border:0;
+  border-top:1px solid var(--line-2);
+  margin:0 auto 14px;
+  width:60%;
+}
+.hero-quote-text{
+  display:block;
+  font-size:0.9167rem;
+  font-weight:700;
   letter-spacing:1px;
 }
 body.dark .hero-quote{background:#111}
@@ -432,7 +448,11 @@ body.dark .hero-summary{border-color:#666}
 
 <!-- ===== Hero ===== -->
 <section class="hero" id="hero">
-  <div class="hero-quote" id="hero-quote">千里之行，始于足下。——老子</div>
+  <div class="hero-quote" id="hero-quote">
+    <span class="hero-quote-label">每 日 一 言</span>
+    <hr class="hero-quote-sep">
+    <span class="hero-quote-text" id="hero-quote-text">天行健，君子以自强不息。——《周易》</span>
+  </div>
   <div class="hero-date">2026年8月4日 · 周二</div>
   <h1 class="hero-title">今日新闻速览</h1>
   <p class="hero-sub">共 80 条 + 12 篇深度解读（不重复）· 点击标题跳转原文</p>
@@ -834,7 +854,7 @@ function tryUpdateNews(){
 function applyNewsData(d){
   var hero=document.querySelector('.hero');
   if(hero){
-    var quoteEl=document.getElementById('hero-quote');
+    var quoteEl=document.getElementById('hero-quote-text');
     if(quoteEl&&d.quote)quoteEl.textContent=d.quote;
     var dateEl=hero.querySelector('.hero-date');
     if(dateEl&&d.date){
