@@ -143,6 +143,17 @@ body{
   border-bottom:2px solid var(--ink);
   scroll-margin-top:140px;
 }
+.hero-quote{
+  font-size:0.625rem;
+  color:var(--gray);
+  font-style:italic;
+  margin-bottom:10px;
+  padding:8px 12px;
+  border-left:3px solid var(--line-2);
+  line-height:1.7;
+  background:#fafafa;
+}
+body.dark .hero-quote{background:#111}
 .hero-date{font-size:0.625rem;color:var(--gray);font-weight:700;margin-bottom:4px}
 .hero-title{font-size:1.1667rem;font-weight:800;line-height:1.25;margin-bottom:4px}
 .hero-sub{font-size:0.5833rem;color:var(--gray);margin-bottom:10px;font-weight:600}
@@ -347,7 +358,7 @@ body.dark .nav-btn:active{background:#fff;color:#000}
 body.is-fs .top-header{transform:translateY(-100%)}
 body.is-fs #update-status{display:none}
 body.is-fs .footer{display:none}
-body.is-fs .hero{margin-top:6px}
+body.is-fs .hero{margin-top:24px}
 body.is-fs{padding-top:6px}
 body.is-fs #fs-fab{
   background:var(--bg);
@@ -419,6 +430,7 @@ body.dark .hero-summary{border-color:#666}
 
 <!-- ===== Hero ===== -->
 <section class="hero" id="hero">
+  <div class="hero-quote" id="hero-quote">千里之行，始于足下。——老子</div>
   <div class="hero-date">2026年8月4日 · 周二</div>
   <h1 class="hero-title">今日新闻速览</h1>
   <p class="hero-sub">共 80 条 + 12 篇深度解读（不重复）· 点击标题跳转原文</p>
@@ -819,12 +831,16 @@ function tryUpdateNews(){
 }
 function applyNewsData(d){
   var hero=document.querySelector('.hero');
-  if(hero&&d.summary){
+  if(hero){
+    var quoteEl=document.getElementById('hero-quote');
+    if(quoteEl&&d.quote)quoteEl.textContent=d.quote;
     var dateEl=hero.querySelector('.hero-date');
     if(dateEl&&d.date){
       var parts=d.date.split('-');
       dateEl.textContent=parts[0]+'\u5e74'+parseInt(parts[1])+'\u6708'+parseInt(parts[2])+'\u65e5 \u00b7 '+(d.weekday||'');
     }
+    var titleEl=hero.querySelector('.hero-title');
+    if(titleEl&&d.title)titleEl.textContent=d.title;
     var subEl=hero.querySelector('.hero-sub');
     if(subEl&&d.subtitle)subEl.textContent=d.subtitle;
     var sumEl=hero.querySelector('.hero-summary');
@@ -911,7 +927,7 @@ function applyNewsData(d){
     }
   }
   var ft=document.querySelector('.footer');
-  if(ft&&d.date)ft.textContent='\u4eca\u65e5\u65b0\u95fb\u901f\u89c8 \u00b7 \u58a8\u6c34\u5c4f\u4f18\u5316\u7248 \u00b7 '+d.date.replace(/-/g,'.');
+  if(ft&&d.date)ft.textContent=(d.title||'今日新闻速览')+' · 墨水屏优化版 · '+d.date.replace(/-/g,'.');
 }
 setTimeout(tryUpdateNews,1000);
 
